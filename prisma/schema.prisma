@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id         String         @id
+  name       String
+  email      String
+  locationId String
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  balances   LeaveBalance[]
+  requests   LeaveRequest[]
+}
+
+model LeaveBalance {
+  id           String    @id @default(uuid())
+  employeeId   String
+  locationId   String
+  leaveType    String
+  totalDays    Float
+  usedDays     Float     @default(0)
+  reservedDays Float     @default(0)
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  employee     Employee  @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, locationId, leaveType])
+}
+
+model LeaveRequest {
+  id           String   @id @default(uuid())
+  employeeId   String
+  locationId   String
+  leaveType    String
+  startDate    DateTime
+  endDate      DateTime
+  days         Float
+  status       String   @default("PENDING")
+  hcmReference String?
+  reason       String?
+  reviewedBy   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  employee     Employee @relation(fields: [employeeId], references: [id])
+}
+
+model SyncLog {
+  id        String   @id @default(uuid())
+  syncType  String
+  status    String
+  details   String?
+  createdAt DateTime @default(now())
+}
