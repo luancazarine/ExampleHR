@@ -378,6 +378,14 @@ Health check endpoint.
 
 Returns recent sync operation logs.
 
+### 6.4 Interactive API Documentation
+
+All endpoints are documented with **Swagger / OpenAPI 3.0** and served via an interactive UI:
+
+- **URL**: `http://localhost:3000/docs`
+- **Features**: request/response schemas, parameter descriptions, example values, and "Try it out" functionality
+- **Implementation**: `@nestjs/swagger` with `DocumentBuilder` configured in `main.ts`; controllers annotated with `@ApiTags`, `@ApiOperation`, `@ApiResponse`; DTOs annotated with `@ApiProperty`
+
 ---
 
 ## 7. Business Logic and State Machine
@@ -547,6 +555,7 @@ SQLite's write serialization provides an additional layer of protection against 
 | Testing | Jest + Supertest | NestJS native support, comprehensive mocking |
 | HTTP Client | Axios | Interceptors for retry logic, widely adopted |
 | Validation | class-validator + class-transformer | Decorator-based DTO validation, NestJS integration |
+| API Docs | @nestjs/swagger + swagger-ui-express | Auto-generated OpenAPI 3.0 docs from decorators, interactive UI at `/docs` |
 
 ---
 

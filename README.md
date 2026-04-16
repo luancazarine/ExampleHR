@@ -16,6 +16,12 @@ npx prisma migrate dev
 npm run start:dev
 ```
 
+Once the server is running, open **http://localhost:3000/docs** to explore the interactive Swagger UI documentation.
+
+## API Documentation
+
+The full API documentation is available via **Swagger UI** at `/docs` when the server is running. It includes request/response schemas, parameter descriptions, and example values for every endpoint.
+
 ## API Endpoints
 
 ### Leave Balances
@@ -60,4 +66,5 @@ npm run test:e2e
 
 ## Documentation
 
-See [docs/TRD.md](docs/TRD.md) for the Technical Requirements Document.
+- **Swagger UI**: `http://localhost:3000/docs` (interactive API explorer)
+- **Technical Requirements Document**: [docs/TRD.md](docs/TRD.md)
