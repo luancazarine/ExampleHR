@@ -20,9 +20,10 @@
 9. [Error Handling and Resilience](#9-error-handling-and-resilience)
 10. [Alternatives Considered](#10-alternatives-considered)
 11. [Technology Stack](#11-technology-stack)
-12. [Testing Strategy](#12-testing-strategy)
-13. [Non-Functional Requirements](#13-non-functional-requirements)
-14. [Glossary](#14-glossary)
+12. [Configuration and Local Development](#12-configuration-and-local-development)
+13. [Testing Strategy](#13-testing-strategy)
+14. [Non-Functional Requirements](#14-non-functional-requirements)
+15. [Glossary](#15-glossary)
 
 ---
 
@@ -559,9 +560,64 @@ SQLite's write serialization provides an additional layer of protection against 
 
 ---
 
-## 12. Testing Strategy
+## 12. Configuration and Local Development
 
-### 12.1 Unit Tests
+### 12.1 Environment Variables
+
+The service is configured via environment variables loaded from a `.env` file (using `@nestjs/config`).
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DATABASE_URL` | Yes | — | Prisma connection string for SQLite (e.g. `file:./dev.db`) |
+| `HCM_BASE_URL` | No | `http://localhost:3001` | Base URL of the HCM API. In production, this points to the real HCM (Workday/SAP). In development, it points to the mock HCM server. |
+| `HCM_MAX_RETRIES` | No | `3` | Number of retry attempts for transient HCM failures (with exponential backoff). |
+| `PORT` | No | `3000` | Port on which the main application listens. |
+| `MOCK_HCM_PORT` | No | `3001` | Port on which the standalone mock HCM server listens (dev only). |
+
+Example `.env`:
+
+```env
+DATABASE_URL="file:./dev.db"
+HCM_BASE_URL="http://localhost:3001"
+```
+
+### 12.2 Local Development Setup
+
+The application depends on an external HCM system. For local development, a **standalone mock HCM server** is provided at `test/mock-hcm-server/`. It is a real NestJS application with stateful in-memory balance tracking.
+
+**Startup procedure (two terminals):**
+
+```
+# Terminal 1 — Mock HCM server
+npm run start:mock-hcm
+
+# Terminal 2 — Main application
+npm run start:dev
+```
+
+The mock HCM server pre-seeds sample employee balances on startup and exposes test manipulation endpoints at `/hcm/__test__/*` for ad-hoc testing (set balances, inject errors, simulate bonuses).
+
+### 12.3 Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run start:dev` | Start the main app in watch mode (port 3000) |
+| `npm run start:mock-hcm` | Start the standalone mock HCM server (port 3001) |
+| `npm run build` | Compile TypeScript to JavaScript |
+| `npm run start:prod` | Run the compiled production build |
+| `npm test` | Run unit tests |
+| `npm run test:cov` | Run unit tests with coverage report |
+| `npm run test:e2e` | Run E2E tests (mock HCM starts automatically) |
+
+### 12.4 Production Considerations
+
+In production, `HCM_BASE_URL` must point to the real HCM system endpoint. The mock HCM server is never deployed — it exists solely for development and testing. The `HCM_MAX_RETRIES` value should be tuned based on the real HCM's latency characteristics.
+
+---
+
+## 13. Testing Strategy
+
+### 13.1 Unit Tests
 
 Every service has corresponding `*.spec.ts` tests with mocked dependencies:
 
@@ -569,7 +625,7 @@ Every service has corresponding `*.spec.ts` tests with mocked dependencies:
 - **LeaveBalanceService**: Sync processing, discrepancy detection, upsert logic
 - **HcmService**: HTTP client behavior, retry logic, error mapping, response parsing
 
-### 12.2 Integration/E2E Tests
+### 13.2 Integration/E2E Tests
 
 A **mock HCM server** (real NestJS application) provides a stateful simulation of the HCM API with test manipulation endpoints for controlling behavior (inject errors, set balances, simulate bonuses).
 
@@ -584,7 +640,7 @@ E2E test scenarios:
 8. Cancellation: at each stage, including HCM notification
 9. Stale cache: local vs HCM balance divergence
 
-### 12.3 Coverage Target
+### 13.3 Coverage Target
 
 - 90%+ line coverage
 - All state machine transitions covered
@@ -592,7 +648,7 @@ E2E test scenarios:
 
 ---
 
-## 13. Non-Functional Requirements
+## 14. Non-Functional Requirements
 
 | Requirement | Target |
 |-------------|--------|
@@ -605,7 +661,7 @@ E2E test scenarios:
 
 ---
 
-## 14. Glossary
+## 15. Glossary
 
 | Term | Definition |
 |------|-----------|

@@ -131,6 +131,29 @@ export class LeaveBalanceService {
     };
   }
 
+  private async ensureEmployeeExists(
+    employeeId: string,
+    locationId: string,
+  ): Promise<void> {
+    const existing = await this.prisma.employee.findUnique({
+      where: { id: employeeId },
+    });
+
+    if (!existing) {
+      await this.prisma.employee.create({
+        data: {
+          id: employeeId,
+          name: employeeId,
+          email: `${employeeId}@placeholder.local`,
+          locationId,
+        },
+      });
+      this.logger.log(
+        `Auto-created employee placeholder for ${employeeId} from HCM sync data`,
+      );
+    }
+  }
+
   private async upsertBalances(
     hcmBalances: HcmBalanceRecord[],
   ): Promise<{ processed: number; discrepancies: number }> {
@@ -138,6 +161,11 @@ export class LeaveBalanceService {
     let discrepancies = 0;
 
     for (const hcmBalance of hcmBalances) {
+      await this.ensureEmployeeExists(
+        hcmBalance.employeeId,
+        hcmBalance.locationId,
+      );
+
       const existing = await this.prisma.leaveBalance.findUnique({
         where: {
           employeeId_locationId_leaveType: {

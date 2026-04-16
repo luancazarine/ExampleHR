@@ -8,7 +8,7 @@ import {
   Res,
   HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
+import * as express from 'express';
 import { MockHcmService } from './mock-hcm.service';
 
 @Controller('hcm')
@@ -18,7 +18,7 @@ export class MockHcmController {
   @Get('balances/:employeeId')
   async getBalances(
     @Param('employeeId') employeeId: string,
-    @Res() res: Response,
+    @Res() res: express.Response,
   ) {
     await this.applyDelayAndErrors(res);
     if (res.headersSent) return;
@@ -35,7 +35,7 @@ export class MockHcmController {
   }
 
   @Post('absences')
-  async registerAbsence(@Body() body: any, @Res() res: Response) {
+  async registerAbsence(@Body() body: any, @Res() res: express.Response) {
     await this.applyDelayAndErrors(res);
     if (res.headersSent) return;
 
@@ -65,7 +65,7 @@ export class MockHcmController {
   @Delete('absences/:hcmReference')
   async cancelAbsence(
     @Param('hcmReference') hcmReference: string,
-    @Res() res: Response,
+    @Res() res: express.Response,
   ) {
     await this.applyDelayAndErrors(res);
     if (res.headersSent) return;
@@ -75,7 +75,7 @@ export class MockHcmController {
   }
 
   @Post('batch-sync')
-  async batchSync(@Res() res: Response) {
+  async batchSync(@Res() res: express.Response) {
     await this.applyDelayAndErrors(res);
     if (res.headersSent) return;
 
@@ -133,7 +133,7 @@ export class MockHcmController {
     return { status: 'ok' };
   }
 
-  private async applyDelayAndErrors(res: Response): Promise<void> {
+  private async applyDelayAndErrors(res: express.Response): Promise<void> {
     const delay = this.mockHcmService.getDelay();
     if (delay > 0) {
       await new Promise((resolve) => setTimeout(resolve, delay));

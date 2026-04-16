@@ -13,6 +13,7 @@ describe('LeaveBalanceService', () => {
     prisma = {
       employee: {
         findUnique: jest.fn(),
+        create: jest.fn().mockResolvedValue({}),
       },
       leaveBalance: {
         findMany: jest.fn(),
@@ -143,6 +144,7 @@ describe('LeaveBalanceService', () => {
         ],
       });
 
+      prisma.employee.findUnique.mockResolvedValue(null);
       prisma.leaveBalance.findUnique.mockResolvedValue(null);
       prisma.leaveRequest.aggregate.mockResolvedValue({
         _sum: { days: 0 },
@@ -156,6 +158,11 @@ describe('LeaveBalanceService', () => {
       const result = await service.triggerBatchSync();
       expect(result.status).toBe('SUCCESS');
       expect(result.recordsProcessed).toBe(1);
+      expect(prisma.employee.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ id: 'EMP001' }),
+        }),
+      );
     });
 
     it('should report discrepancies when usedDays mismatch', async () => {
@@ -170,6 +177,7 @@ describe('LeaveBalanceService', () => {
         ],
       });
 
+      prisma.employee.findUnique.mockResolvedValue({ id: 'EMP001' });
       prisma.leaveBalance.findUnique.mockResolvedValue({
         id: 'bal-1',
         usedDays: 10,
@@ -213,6 +221,7 @@ describe('LeaveBalanceService', () => {
         },
       ];
 
+      prisma.employee.findUnique.mockResolvedValue(null);
       prisma.leaveBalance.findUnique.mockResolvedValue(null);
       prisma.leaveRequest.aggregate.mockResolvedValue({
         _sum: { days: 0 },
@@ -225,6 +234,36 @@ describe('LeaveBalanceService', () => {
 
       const result = await service.processWebhook(balances);
       expect(result.recordsProcessed).toBe(1);
+      expect(prisma.employee.create).toHaveBeenCalled();
+    });
+
+    it('should skip employee creation if employee already exists', async () => {
+      const balances = [
+        {
+          employeeId: 'EMP001',
+          locationId: 'LOC_US',
+          leaveType: 'VACATION',
+          totalDays: 25,
+        },
+      ];
+
+      prisma.employee.findUnique.mockResolvedValue({ id: 'EMP001' });
+      prisma.leaveBalance.findUnique.mockResolvedValue({
+        id: 'bal-1',
+        usedDays: 0,
+      });
+      prisma.leaveRequest.aggregate.mockResolvedValue({
+        _sum: { days: 0 },
+      });
+      prisma.leaveBalance.update.mockResolvedValue({});
+      prisma.syncLog.create.mockResolvedValue({
+        id: 'sync-1',
+        status: 'SUCCESS',
+      });
+
+      const result = await service.processWebhook(balances);
+      expect(result.recordsProcessed).toBe(1);
+      expect(prisma.employee.create).not.toHaveBeenCalled();
     });
   });
 });

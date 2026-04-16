@@ -93,7 +93,7 @@ export class HcmService {
     operation: () => Promise<T>,
     retries: number = this.maxRetries,
   ): Promise<T> {
-    let lastError: Error;
+    let lastError: Error = new Error('No attempts made');
 
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
